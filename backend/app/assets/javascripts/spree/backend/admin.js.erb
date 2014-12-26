@@ -1,4 +1,6 @@
 //= require_self
+//= require select2
+//= require spree/backend/spree-select2
 //= require spree/backend/handlebar_extensions
 //= require spree/backend/variant_autocomplete
 //= require spree/backend/taxon_autocomplete
@@ -22,7 +24,7 @@ jQuery(function($) {
      # like states_spec and shipping_methods_spec. Let's not do this. %>
   <% unless Rails.env.test? %>
     $('.main-menu-wrapper ul').AdaptiveMenu({
-      text: "<a href='#'><i class='icon-chevron-down'></i> " + Spree.translations.more + "</a>",
+      text: "<a href='#'><i class='fa fa-chevron-down'></i>更多</a>",
       klass: "dropdown"
     });
   <% end %>
@@ -47,7 +49,7 @@ jQuery(function($) {
   setTimeout('$(".flash").fadeOut()', 5000);
 
   // Highlight hovered table column
-  $('table tbody tr td.actions a').hover(function(){
+  $('table tbody tr td.actions').find('a, button').hover(function(){
     var tr = $(this).closest('tr');
     var klass = 'highlight action-' + $(this).data('action')
     tr.addClass(klass)
@@ -104,13 +106,13 @@ $.fn.radioControlsVisibilityOfElement = function(dependentElementSelector){
 
 handle_date_picker_fields = function(){
   $('.datepicker').datepicker({
-    dateFormat: Spree.translations.date_picker,
-    dayNames: Spree.translations.abbr_day_names,
-    dayNamesMin: Spree.translations.abbr_day_names,
-    firstDay: Spree.translations.first_day,
-    monthNames: Spree.translations.month_names,
-    prevText: Spree.translations.previous,
-    nextText: Spree.translations.next,
+    dateFormat: "yy/mm/dd",
+    dayNames: ["日", "一", "二", "三", "四", "五", "六"],
+    dayNamesMin: ["日", "一", "二", "三", "四", "五", "六"],
+    firstDay: 0,
+    monthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+    prevText: "上一页",
+    nextText: "下一页",
     showOn: "focus"
   });
 
@@ -140,11 +142,11 @@ $(document).ready(function(){
              }
     });
   });
-
+  var uniqueId = 1;
   $('.spree_add_fields').click(function() {
     var target = $(this).data("target");
     var new_table_row = $(target + ' tr:visible:last').clone();
-    var new_id = new Date().getTime();
+    var new_id = new Date().getTime() + (uniqueId++);
     new_table_row.find("input, select").each(function () {
       var el = $(this);
       el.val("");
@@ -173,7 +175,9 @@ $(document).ready(function(){
         },
         dataType: 'script',
         success: function(response) {
-          el.parents("tr").fadeOut('hide');
+          el.parents("tr").fadeOut('hide', function() {
+            $(this).remove();
+          });
         },
         error: function(response, textStatus, errorThrown) {
           show_flash('error', response.responseText);
@@ -272,4 +276,14 @@ $(document).ready(function(){
   $('a.dismiss').click(function() {
     $(this).parent().fadeOut();
   });
+
+  window.Spree.advanceOrder = function() {
+      $.ajax({
+          type: "PUT",
+          async: false,
+          url: Spree.url(Spree.routes.checkouts_api + "/" + order_number + "/advance")
+      }).done(function() {
+          window.location.reload();
+      });
+  }
 });
